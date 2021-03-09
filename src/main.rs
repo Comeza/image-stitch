@@ -22,14 +22,16 @@ fn main() {
 		match file {
 			Ok(file) => {
 				let path = file.path();
-				println!("indexing file {:?}", path);
 				if regex.is_match(path.to_str().unwrap()) {
+					println!("indexing file {:?}", path);
 					file_list.push(path);
 				}
 			}
 			Err(_) => {}
 		}
 	}
+
+	alphanumeric_sort::sort_path_slice(&mut file_list);
 
 	dimensions = image::open(file_list.first().unwrap())
 		.unwrap()
@@ -40,7 +42,7 @@ fn main() {
 
 	for (i, file) in file_list.iter().enumerate() {
 		let load_time = Instant::now();
-		print!("processing {:?}", file);
+		print!("processing {:?}...", file);
 		let mut image = image::open(file).unwrap();
 		image::imageops::overlay(&mut image_buffer, &mut image, 0, dimensions.1 * i as u32);
 		println!(" done [{:?}]", load_time.elapsed());
