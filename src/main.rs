@@ -1,62 +1,60 @@
 extern crate image;
 
-use image::{DynamicImage, GenericImageView, ImageBuffer, ImageFormat, RgbaImage};
+use image::{GenericImageView, ImageBuffer, ImageFormat, RgbaImage};
 use regex::Regex;
-use std::{fs, path::Path, time::Instant};
+use std::{
+	fs,
+	path::{Path, PathBuf},
+	time::Instant,
+};
 
+type Dimensions = (u32, u32);
 fn main() {
-  let dir = &mut fs::read_dir(".").unwrap();
-  let regex = Regex::new(r".*\.(png|jpeg|bmp|ico|tiff|webp|avif|pnm|dds|tga|farbfeld)$").unwrap();
-  let mut count = 0;
+	let global_instant = Instant::now();
+	let dir = &mut fs::read_dir(".").unwrap();
+	let regex = Regex::new(r".*\.(png|jpeg|bmp|ico|tiff|webp|avif|pnm|dds|tga|farbfeld)$").unwrap();
 
-  let (mut dim_x, mut dim_y): (u32, u32) = (0, 0);
-  let mut images: Vec<DynamicImage> = vec![];
+	let mut file_list: Vec<PathBuf> = vec![];
+	let dimensions: Dimensions;
+	let output_dir = Path::new("output");
 
-  for file in dir {
-    match file {
-      Ok(file) => {
-        let file_name = file.file_name();
-        print!("loading {:?}", file_name);
-        if !regex.is_match(file_name.to_str().unwrap()) {
-          println!("[unsporrted file format]");
-          continue;
-        }
+	for file in dir {
+		match file {
+			Ok(file) => {
+				let path = file.path();
+				println!("indexing file {:?}", path);
+				if regex.is_match(path.to_str().unwrap()) {
+					file_list.push(path);
+				}
+			}
+			Err(_) => {}
+		}
+	}
 
-        let timer = Instant::now();
-        let image = image::open(file.path()).unwrap();
-        let dims = image.dimensions();
-        images.push(image);
-        dim_x += dims.0;
-        dim_y += dims.1;
-        count += 1;
-        println!(" [{:?}]", timer.elapsed());
-      }
-      Err(_) => continue,
-    }
-  }
+	dimensions = image::open(file_list.first().unwrap())
+		.unwrap()
+		.dimensions();
 
-  dim_x /= count;
-  dim_y /= count;
-  println!("dims {}x{} starting to process..", dim_x, dim_y);
+	let mut image_buffer: RgbaImage =
+		ImageBuffer::new(dimensions.0, dimensions.1 * file_list.len() as u32);
 
-  let mut buffer: RgbaImage = ImageBuffer::new(dim_x, dim_y * count);
-  let mut offset = 0;
+	for (i, file) in file_list.iter().enumerate() {
+		let load_time = Instant::now();
+		print!("processing {:?}", file);
+		let mut image = image::open(file).unwrap();
+		image::imageops::overlay(&mut image_buffer, &mut image, 0, dimensions.1 * i as u32);
+		println!(" done [{:?}]", load_time.elapsed());
+	}
 
-  for (i, image) in images.iter_mut().enumerate() {
-    image::imageops::overlay(&mut buffer, image, 0, (offset) as u32);
-    offset += image.dimensions().1;
-    println!("{}/{}", i + 1, count);
-  }
+	if !output_dir.exists() {
+		fs::create_dir_all(output_dir).unwrap();
+		println!("creatd output dir")
+	}
 
-  print!("saving file...");
-  let file_path = Path::new("./output");
-  if !file_path.exists() {
-    fs::create_dir_all(file_path).unwrap();
-  }
-  let out_path = file_path.join("output.png");
-  println!("save file: {:?}", out_path);
-  match buffer.save_with_format(out_path, ImageFormat::Png) {
-    Ok(_) => println!(" done."),
-    Err(e) => println!("error\n{:?}", e),
-  }
+	let output_file = output_dir.join("output.png");
+	match image_buffer.save_with_format(output_file, ImageFormat::Png) {
+		Ok(_) => println!("Saved file {:?}", output_dir),
+		Err(e) => panic!(e),
+	}
+	println!("Finished in {:?}", global_instant.elapsed());
 }
