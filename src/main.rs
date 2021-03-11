@@ -1,29 +1,53 @@
 extern crate image;
 
-use image::{GenericImageView, ImageBuffer, ImageFormat, RgbaImage};
+mod img;
+
+use clap::{Clap, ValueHint};
+use image::GenericImageView;
+use image::ImageFormat;
 use regex::Regex;
-use std::{
-	fs,
-	path::{Path, PathBuf},
-	time::Instant,
-};
+use std::fs;
+use std::path::PathBuf;
+use std::time::Instant;
 
 type Dimensions = (u32, u32);
+
+#[derive(Clap, Debug)]
+#[clap(name = "image-stitch", version = "0.2.0")]
+struct Opt {
+	#[clap(short, long, parse(from_os_str), value_hint = ValueHint::FilePath, default_value = "output/output.png")]
+	output: PathBuf,
+
+	#[clap(short, long, parse(from_os_str), value_hint = ValueHint::FilePath, default_value = ".")]
+	input: PathBuf,
+}
+
 fn main() {
+	let opt = Opt::parse();
 	let global_instant = Instant::now();
-	let dir = &mut fs::read_dir(".").unwrap();
-	let regex = Regex::new(r".*\.(png|jpeg|bmp|ico|tiff|webp|avif|pnm|dds|tga|farbfeld)$").unwrap();
+	let file_list = &mut index_images(fs::read_dir(opt.input).unwrap());
 
+	alphanumeric_sort::sort_path_slice(file_list);
+
+	let dimensions = image::open(file_list.first().unwrap())
+		.unwrap()
+		.dimensions();
+	img::save_image_buffer(
+		&opt.output,
+		img::process_images(file_list, dimensions),
+		ImageFormat::Png,
+	);
+	println!("Finished in {:?}", global_instant.elapsed());
+}
+
+fn index_images(dir: std::fs::ReadDir) -> Vec<PathBuf> {
 	let mut file_list: Vec<PathBuf> = vec![];
-	let dimensions: Dimensions;
-	let output_dir = Path::new("output");
-
+	let regex = Regex::new(r".*\.(png|jpeg|bmp|ico|tiff|webp|avif|pnm|dds|tga|farbfeld)$").unwrap();
 	for file in dir {
 		match file {
 			Ok(file) => {
 				let path = file.path();
 				if regex.is_match(path.to_str().unwrap()) {
-					println!("indexing file {:?}", path);
 					file_list.push(path);
 				}
 			}
@@ -31,32 +55,5 @@ fn main() {
 		}
 	}
 
-	alphanumeric_sort::sort_path_slice(&mut file_list);
-
-	dimensions = image::open(file_list.first().unwrap())
-		.unwrap()
-		.dimensions();
-
-	let mut image_buffer: RgbaImage =
-		ImageBuffer::new(dimensions.0, dimensions.1 * file_list.len() as u32);
-
-	for (i, file) in file_list.iter().enumerate() {
-		let load_time = Instant::now();
-		print!("processing {:?}...", file);
-		let mut image = image::open(file).unwrap();
-		image::imageops::overlay(&mut image_buffer, &mut image, 0, dimensions.1 * i as u32);
-		println!(" done [{:?}]", load_time.elapsed());
-	}
-
-	if !output_dir.exists() {
-		fs::create_dir_all(output_dir).unwrap();
-		println!("creatd output dir")
-	}
-
-	let output_file = output_dir.join("output.png");
-	match image_buffer.save_with_format(output_file, ImageFormat::Png) {
-		Ok(_) => println!("Saved file {:?}", output_dir),
-		Err(e) => panic!(e),
-	}
-	println!("Finished in {:?}", global_instant.elapsed());
+	return file_list;
 }
