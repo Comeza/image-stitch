@@ -15,9 +15,9 @@ This will generate an `output/output.png` file
 - [x] Image stitching
 
 #### Program args
-- [ ] Set output file
-- [ ] Set source dir
-- [ ] Print help
+- [x] Set output file
+- [x] Set source dir
+- [x] Print help
 - [ ] Print supported file formats
 
 #### File Formats
