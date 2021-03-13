@@ -22,41 +22,25 @@ pub fn process_images(
 
     match direction {
         WriteDirection::Y => {
-            for x in 0..(buffer_dim_x / img_dim_x) {
+            'outer_y: for x in 0..(buffer_dim_x / img_dim_x) {
                 for y in 0..(buffer_dim_y / img_dim_y) {
-                    match files.get(index) {
-                        Some(path) => {
-                            let mut image = image::open(path).unwrap();
-                            imageops::overlay(
-                                image_buffer,
-                                &mut image,
-                                x * img_dim_x,
-                                y * img_dim_y,
-                            );
-                            index += 1;
-                            progress_bar.inc(1);
-                        }
-                        None => return,
+                    let has_processed = overlay_image(index, files, image_buffer, &img_dim, x, y);
+                    index += 1;
+                    progress_bar.inc(1);
+                    if !has_processed {
+                        break 'outer_y;
                     }
                 }
             }
         }
         WriteDirection::X => {
-            for y in 0..(buffer_dim_y / img_dim_y) {
+            'outer_x: for y in 0..(buffer_dim_y / img_dim_y) {
                 for x in 0..(buffer_dim_x / img_dim_x) {
-                    match files.get(index) {
-                        Some(path) => {
-                            let mut image = image::open(path).unwrap();
-                            imageops::overlay(
-                                image_buffer,
-                                &mut image,
-                                x * img_dim_x,
-                                y * img_dim_y,
-                            );
-                            index += 1;
-                            progress_bar.inc(1);
-                        }
-                        None => return,
+                    let has_processed = overlay_image(index, files, image_buffer, &img_dim, x, y);
+                    index += 1;
+                    progress_bar.inc(1);
+                    if !has_processed {
+                        break 'outer_x;
                     }
                 }
             }
@@ -64,6 +48,29 @@ pub fn process_images(
     }
     progress_bar.finish_and_clear();
 }
+
+fn overlay_image(
+    index: usize,
+    files: &Vec<PathBuf>,
+    image_buffer: &mut RgbaImage,
+    img_dim: &Dimensions<u32>,
+    x: u32,
+    y: u32,
+) -> bool {
+    match files.get(index) {
+        Some(path) => {
+            imageops::overlay(
+                image_buffer,
+                &mut image::open(path).unwrap(),
+                x * img_dim.x,
+                y * img_dim.y,
+            );
+            true
+        }
+        None => false,
+    }
+}
+
 pub fn save_image_buffer(file: &Path, image: RgbaImage, format: ImageFormat) {
     let parent_dir = file.parent().unwrap();
 
