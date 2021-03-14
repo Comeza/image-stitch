@@ -12,7 +12,7 @@ image-stitch -o ./output.png -i ./images -m 16000 -d X
 | Argument    | Alias | Optional | Default             | Description                                    |
 |-------------|-------|----------|---------------------|------------------------------------------------|
 | `input`     | `i`   | Yes      | ./                  | The source folder for the images.              |
-| `output`    | `o`   | Yes      | ./output/output.png | The output file.                               |
+| `output`    | `o`   | Yes      | ./output.png        | The output file.                               |
 | `max`       | `m`   | Yes      | 0                   | Maximum dimension in the defined direction     |
 | `direction` | `d`   | Yes      | X                   | The direction the program processes the images |
 
