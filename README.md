@@ -4,11 +4,9 @@ This is a simple program to stitch (hundrets to thousand) images together.
 
 
 ## Usage
-The program will use the current working dir as source folder.
 ```
-image-stitch
+image-stitch -o ./output.png -i ./images -m 16000 -d X
 ```
-This will generate an `output/output.png` file
 
 ## Arguments
 | Argument    | Alias | Optional | Default             | Description                                    |
