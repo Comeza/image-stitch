@@ -13,10 +13,9 @@ image-stitch -o ./output.png -i ./images -m 16000 -d X
 |-------------|-------|----------|---------------------|------------------------------------------------|
 | `input`     | `i`   | Yes      | ./                  | The source folder for the images.              |
 | `output`    | `o`   | Yes      | ./output/output.png | The output file.                               |
-| `max`       | `m`   | Yes*     |                     | Maximum dimension in the defined direction     |
+| `max`       | `m`   | Yes      | 0xffffffff          | Maximum dimension in the defined direction     |
 | `direction` | `d`   | Yes      | X                   | The direction the program processes the images |
 
-*Right now buggy
 
 
 ## Todo
