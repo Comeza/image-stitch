@@ -10,6 +10,17 @@ image-stitch
 ```
 This will generate an `output/output.png` file
 
+## Arguments
+| Argument    | Alias | Optional | Default             | Description                                    |
+|-------------|-------|----------|---------------------|------------------------------------------------|
+| `input`     | `i`   | Yes      | ./                  | The source folder for the images.              |
+| `output`    | `o`   | Yes      | ./output/output.png | The output file.                               |
+| `max`       | `m`   | Yes      |                     | Maximum dimension in the defined direction     |
+| `direction` | `d`   | Yes      | X                   | The direction the program processes the images |
+
+*Right now buggy
+
+
 ## Todo
 #### General
 - [x] Image stitching
