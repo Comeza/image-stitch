@@ -1,6 +1,6 @@
 # image-stitch
 
-This is a simple program to stitch (hundrets to thousand) images together.
+This is a simple program to stitch (hundreds to thousand) images together.
 
 
 ## Usage
