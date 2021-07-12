@@ -8,6 +8,6 @@ edition = "2018"
 [dependencies]
 image = "*"
 regex = "*"
+loading = "*"
 alphanumeric-sort = "*"
-indicatif = "*"
 clap = { git = "https://github.com/clap-rs/clap" }

@@ -4,28 +4,30 @@ use std::{
 };
 
 #[derive(Debug)]
-pub struct Dimensions<T> {
+pub struct Dimension<T> {
     pub x: T,
     pub y: T,
 }
 
-impl<T> Dimensions<T> {
+impl<T> Dimension<T> {
     pub fn new(x: T, y: T) -> Self {
         Self { x, y }
     }
+}
 
-    pub fn from_tuple(dim: (T, T)) -> Self {
-        Self::new(dim.0, dim.1)
+impl<T> From<(T, T)> for Dimension<T> {
+    fn from((x, y): (T, T)) -> Self {
+        Self { x, y }
     }
 }
 
-impl Dimensions<u32> {
+impl Dimension<u32> {
     pub fn to_tuple(&self) -> (u32, u32) {
         (self.x, self.y)
     }
 }
 
-impl Add for Dimensions<u32> {
+impl Add for Dimension<u32> {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
@@ -33,7 +35,7 @@ impl Add for Dimensions<u32> {
     }
 }
 
-impl Sub for Dimensions<u32> {
+impl Sub for Dimension<u32> {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
@@ -41,13 +43,13 @@ impl Sub for Dimensions<u32> {
     }
 }
 
-impl AddAssign for Dimensions<u32> {
+impl AddAssign for Dimension<u32> {
     fn add_assign(&mut self, other: Self) {
         *self = Self::new(self.x + other.x, self.y + other.y)
     }
 }
 
-impl SubAssign for Dimensions<u32> {
+impl SubAssign for Dimension<u32> {
     fn sub_assign(&mut self, other: Self) {
         *self = Self::new(self.x - other.x, self.y - other.y)
     }
