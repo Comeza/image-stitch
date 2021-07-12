@@ -7,7 +7,6 @@ mod write_direction;
 use clap::Clap;
 use dimension::Dimension;
 use image::{GenericImageView, ImageBuffer, ImageFormat};
-use loading::Loading;
 use opt::Opt;
 use std::path::PathBuf;
 use std::time::Instant;
@@ -63,12 +62,10 @@ fn main() {
 }
 
 fn index_dir(dir: &PathBuf) -> Vec<PathBuf> {
-    let mut loading = Loading::new();
-
     let read_dir = fs::read_dir(dir).expect(format!("Could not read dir {:?}", dir).as_str());
     let mut file_list = Vec::<PathBuf>::new();
 
-    for (index, item) in read_dir.into_iter().enumerate() {
+    for item in read_dir.into_iter() {
         let item = item.expect(format!("Could not iterate through dir: {:?}", dir).as_str());
         let path = item.path();
         let format = ImageFormat::from_path(&path)
