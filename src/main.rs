@@ -1,86 +1,65 @@
-extern crate image;
-
-mod dimension;
-mod img;
-mod write_direction;
+use std::{fs, path::PathBuf};
 
 use clap::Clap;
-use dimension::Dimension;
-use image::{GenericImageView, ImageBuffer, ImageFormat};
-use opt::Opt;
-use std::path::PathBuf;
-use std::time::Instant;
-use std::{fs, process};
-use write_direction::WriteDirection;
+use image::{imageops, DynamicImage, GenericImageView};
 
-mod opt;
-fn main() {
-    let global_instant = Instant::now();
-    let opt = Opt::parse();
-    let max_length: u32 = opt.max.unwrap_or(0);
+#[derive(Clap, Debug)]
+#[clap(author, version)]
+struct Args {
+    input: PathBuf,
 
-    let mut files = index_dir(&opt.input);
-    if files.len() <= 0 {
-        println!("No files indexed.");
-        process::exit(0)
-    }
+    #[clap(short, long, default_value = "output.png")]
+    output: PathBuf,
+
+    #[clap(long)]
+    identity: Option<PathBuf>,
+
+    #[clap(long, short)]
+    max: Option<usize>,
+}
+
+fn main() -> std::io::Result<()> {
+    let args = Args::parse();
+    let mut files = fs::read_dir(&args.input)
+        .expect("Could not read dir")
+        .map(|entry| entry.expect("Could not read dir"))
+        .filter(|e| e.file_type().expect("Could not get File type").is_file())
+        .map(|e| e.path())
+        .collect::<Vec<PathBuf>>();
 
     alphanumeric_sort::sort_path_slice(&mut files);
 
-    let first_file = files
-        .first()
-        .expect("Could not unwrap first file to measure dimensions");
+    let identity = image::open(match args.identity {
+        Some(path) => path,
+        None => files.get(0).unwrap().clone(),
+    })
+    .unwrap();
 
-    let img_dims = Dimension::from(
-        image::open(first_file)
-            .expect("Could not parse first image´to measure dimensions")
-            .dimensions(),
+    let chunk_size = args.max.unwrap_or(files.len());
+    let chunks = files.chunks(chunk_size);
+
+    let mut blocks = Vec::new();
+    for chunk in chunks {
+        let mut block =
+            DynamicImage::new_rgb8(identity.width() * chunk.len() as u32, identity.height());
+
+        for (i, path) in chunk.iter().enumerate() {
+            let img = image::open(path).unwrap();
+            imageops::overlay(&mut block, &img, i as u32 * identity.width(), 0);
+        }
+        blocks.push(block);
+    }
+
+    let mut image = DynamicImage::new_rgb8(
+        identity.width() * chunk_size as u32,
+        identity.height() * blocks.len() as u32,
     );
 
-    let mut buffer_dim: (u32, u32) = match opt.direction {
-        WriteDirection::X => (files.len() as u32 * img_dims.x, img_dims.y),
-        WriteDirection::Y => (img_dims.x, files.len() as u32 * img_dims.y),
-    };
-
-    if max_length != 0 {
-        buffer_dim = match opt.direction {
-            WriteDirection::X => calc_buffer_dims(max_length, img_dims.x, img_dims.y, files.len()),
-            WriteDirection::Y => calc_buffer_dims(max_length, img_dims.y, img_dims.x, files.len()),
-        };
+    for (i, block) in blocks.iter().enumerate() {
+        imageops::overlay(&mut image, block, 0, i as u32 * identity.height());
     }
 
-    println!("Images: {}", files.len());
-    println!("Row Length: {}", opt.max.unwrap_or(1));
-    println!("Buffer Dimensions: {}x{}", buffer_dim.0, buffer_dim.1);
+    image.save(args.output).expect("Could not save image");
 
-    let mut image_buffer = ImageBuffer::new(buffer_dim.0, buffer_dim.1);
-    img::process_images(&mut files, img_dims, &mut image_buffer, opt.direction);
-    img::save_image_buffer(&opt.output, image_buffer, ImageFormat::Png);
-
-    // file_dim.
-    println!("Finished in {:?}", global_instant.elapsed())
-}
-
-fn index_dir(dir: &PathBuf) -> Vec<PathBuf> {
-    let read_dir = fs::read_dir(dir).expect(format!("Could not read dir {:?}", dir).as_str());
-    let mut file_list = Vec::<PathBuf>::new();
-
-    for item in read_dir.into_iter() {
-        let item = item.expect(format!("Could not iterate through dir: {:?}", dir).as_str());
-        let path = item.path();
-        let format = ImageFormat::from_path(&path)
-            .expect(format!("Could not get image format: {:?}", path).as_str());
-        if format.can_read() {
-            file_list.push(path);
-        }
-    }
-
-    file_list
-}
-
-fn calc_buffer_dims(max_length: u32, dim_a: u32, dim_b: u32, size: usize) -> (u32, u32) {
-    let x_count = max_length / dim_a;
-    let y_count = (size as f32 / x_count as f32).ceil() as u32;
-
-    (x_count * dim_a, y_count * dim_b)
+    Ok(())
 }
