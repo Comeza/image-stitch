@@ -1,9 +1,9 @@
 use std::{fs, path::PathBuf};
 
-use clap::Clap;
+use clap::Parser;
 use image::{imageops, DynamicImage, GenericImageView};
 
-#[derive(Clap, Debug)]
+#[derive(Parser, Debug)]
 #[clap(author, version)]
 struct Args {
     input: PathBuf,

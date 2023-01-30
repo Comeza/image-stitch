@@ -19,6 +19,5 @@ split-debuginfo = "packed"
 
 [dependencies]
 image = "0.23.14"
-clap = { git = "https://github.com/clap-rs/clap", features = ["derive"] }
 alphanumeric-sort = "1.4.3"
-
+clap = { version = "4.1.4", features = ["derive"] }
