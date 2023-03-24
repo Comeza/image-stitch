@@ -15,18 +15,3 @@ image-stitch -o ./output.png -i ./images -m 16000 -d X
 | `output`    | `o`   | Path                                  | ./output.png | Yes      | The output file.                               |
 | `max`       | `m`   | Pixels                                | 0            | Yes      | Maximum dimension in the defined direction     |
 | `direction` | `d`   | `X`: X-Direction<br>`Y`: Y-Direction  | X            | Yes      | The direction the program processes the images |
-
-
-
-## Todo
-#### General
-- [x] Image stitching
-
-#### Program args
-- [x] Set output file
-- [x] Set source dir
-- [x] Print help
-- [ ] Print supported file formats
-
-#### File Formats
-- [ ] Gif
